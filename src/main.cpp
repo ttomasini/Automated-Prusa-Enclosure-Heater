@@ -84,8 +84,7 @@ Adafruit_SH1106G display =
     Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 // Parameters of thermosensors
-#define ONE_WIRE_BUS 5         // Pin used for temp sensors
-OneWire oneWire(ONE_WIRE_BUS); // Setup a oneWire instance
+OneWire oneWire(ONE_WIRE_BUS);  // Setup a oneWire instance
 DallasTemperature sensors(&oneWire);
 
 // OneWire device addresses of the thermometers as configured in configuration.h

@@ -24,14 +24,15 @@ error! The address that's written here is just an example.
 // *You need to find the addresses of your thermometers yourself!*
 // If you don't know how you can take a look at the examples of
 // the DallasTemperature library.
-#define CASE_THERMOMETER_ADDRESS 0x28, 0x23, 0x41, 0x57, 0x04, 0xE1, 0x3C, 0xB9
-#define HEATER_THERMOMETER_ADDRESS 0x28, 0x47, 0xAB, 0x57, 0x04, 0xE1, 0x3C, 0xC1
+#define ONE_WIRE_BUS 5                             // Pin used for temp sensors
+#define CASE_THERMOMETER_ADDRESS 0x28, 0x69, 0x05, 0x57, 0x04, 0xE1, 0x3C, 0xF5
+#define HEATER_THERMOMETER_ADDRESS 0x28, 0x27, 0x61, 0x7A, 0x00, 0x00, 0x00, 0x42
 
 // Values for the position of the servo while open and closed.
 // Needs to be changed to your specific setup, as cheap no-name servos
 // tend to vary a lot regarding its position to a given signal.
-#define SERVO_POS_OPEN 65
-#define SERVO_POS_CLOSED 120
+#define SERVO_POS_OPEN 70
+#define SERVO_POS_CLOSED 125
 
 // Different servos take different amounts of time to move to their destination.
 // Because I don't want the Servo jitter all the time, I'm "attaching" and
@@ -41,8 +42,8 @@ error! The address that's written here is just an example.
 #define SERVO_MOVING_MS 500
 
 // Definitions of pins on which buttons are connected
-#define BUTTON_SELECT 3
 #define BUTTON_UP 4
+#define BUTTON_SELECT 3
 #define BUTTON_DOWN 2
 
 // Definitions of pins where relays are for heater and fan are connected
