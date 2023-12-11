@@ -27,7 +27,7 @@ V1.4
 
 // Include configuartion file.
 // Remember to rename (see above)!
-#include <configuration.h>
+#include "./configuration.h"
 
 // Declaration of variables
 // Do not set values here, they are set in configuration.h
@@ -106,7 +106,6 @@ bool buttonSelectPressed = true;
 
 // Definition of servo-object and initialization of its position
 Servo servo;
-int servopos = 0;
 
 // Bitmap-icons for heating, cooling and fan, stored in PROGMEM
 
@@ -254,11 +253,31 @@ void fanOff()
   }
 }
 
+void servoTurn(int targetAngle) {
+  int currentAngle = servo.read();
+  
+  // mitigate possible invalid initial states to ensure smooth start
+  if(currentAngle < 60 || currentAngle > 135) {
+    servo.write(100);
+    currentAngle = servo.read();
+  }
+
+  while (currentAngle != targetAngle) {
+    if(currentAngle < targetAngle) {
+      servo.write(++currentAngle);
+    } else {
+      servo.write(--currentAngle);
+    }
+
+    delay(20);
+  }
+}
+
 // Set position of servo to open flap
 void servoOpen()
 {
   servo.attach(SERVO_PIN);
-  servo.write(SERVO_POS_OPEN);
+  servoTurn(SERVO_POS_OPEN);
   if (servoState != true)
   {
     display.setCursor(90, 56);
@@ -276,7 +295,7 @@ void servoOpen()
 void servoClose()
 {
   servo.attach(SERVO_PIN);
-  servo.write(SERVO_POS_CLOSED);
+  servoTurn(SERVO_POS_CLOSED);
   if (servoState != false)
   {
     display.setCursor(90, 56);
