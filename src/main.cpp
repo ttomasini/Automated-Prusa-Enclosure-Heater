@@ -72,7 +72,7 @@ bool closeServo = true;
 bool updateTarget = false;
 
 // Timing related variables
-#define TEMPERATURE_DELAY 100  // get Temperature every X second
+#define TEMPERATURE_DELAY 200  // get Temperature every X millisecond
 uint32_t previousMillis_temp = 0;
 uint32_t previousMillis_serial = 0;
 
@@ -565,9 +565,17 @@ void loop() {
     measureTemperatures();   // get new temperatures from sensors
     checkForTempProblems();  // check if temperatures are in safe range
 
-    // shut off fan if heater temp is low enough and if not in mode cooling or fan
-    if (heatertemp <= caseovertemplimit && !(operatingMode == MODE_COOLING || operatingMode == MODE_FAN)) {
-      fanOff();
+    // Never perform fanOff when heater is running
+    if(!heaterState) {
+      // Shut off fan if heater temp is low enough and if not in mode cooling or fan
+      if (heatertemp < caseovertemplimit && !(operatingMode == MODE_COOLING || operatingMode == MODE_FAN)) {
+        fanOff();
+      }
+    }
+
+    // Ensure fan is on when heating is active
+    if(heatertemp > caseovertemplimit) {
+      fanOn();
     }
 
     // This displays the current millis() on the display. It does not serve any
@@ -636,7 +644,7 @@ void loop() {
     // but also resetting it to the closed position after it sometimes
     // randomly moves when the relays turn on, as they seem to interfere with
     // it.
-    if (casetemp <= lowerlimit && heatertemp <= maxheatertemp) {
+    if (casetemp <= lowerlimit && heatertemp < (maxheatertemp-tolerance)) {
       if (heaterState == false) {
         closeServo = true;
       }
