@@ -44,8 +44,8 @@ int heaterovertemplimit = 0;
 
 int upperlimit;
 int lowerlimit;
-int caseTemp = 0;
-int heaterTemp = 0;
+int casetemp = 0;
+int heatertemp = 0;
 char temp_buf[4];
 char serial_temp_buf[4];
 char serial_mode_buf[5];
@@ -261,7 +261,7 @@ void servoTurn(int targetAngle) {
       servo.write(--currentAngle);
     }
 
-    delay(20);
+    delay(17);
   }
 }
 
@@ -306,7 +306,7 @@ void servoClose() {
 // use this system below that temperature. If you do, adjust the threshold
 // accordingly.
 void checkForTempProblems() {
-  if (caseTemp >= caseovertemplimit || heaterTemp >= heaterovertemplimit) {
+  if (casetemp >= caseovertemplimit || heatertemp >= heaterovertemplimit) {
     heaterOff();
     servoOpen();
     while (true) {
@@ -338,7 +338,7 @@ void checkForTempProblems() {
       display.display();
       delay(1000);
     }
-  } else if (caseTemp <= undertemp || heaterTemp <= undertemp) {
+  } else if (casetemp <= undertemp || heatertemp <= undertemp) {
     heaterOff();
     servoOpen();
     while (true) {
@@ -406,21 +406,21 @@ void checkButtons() {
 void measureTemperatures() {
   sensors.requestTemperatures();
   if (TEMPERATURE_SCALE_C == true) {
-    caseTemp = sensors.getTempC(caseThermometer);
-    heaterTemp = sensors.getTempC(heaterThermometer);
+    casetemp = sensors.getTempC(caseThermometer);
+    heatertemp = sensors.getTempC(heaterThermometer);
   } else {
-    caseTemp = sensors.getTempF(caseThermometer);
-    heaterTemp = sensors.getTempF(heaterThermometer);
+    casetemp = sensors.getTempF(caseThermometer);
+    heatertemp = sensors.getTempF(heaterThermometer);
   }
   // Show current temp on display
   display.fillRect(42, 16, 46, 32, SH110X_BLACK);
   display.setCursor(42, 16);
   display.setTextSize(2);
-  sprintf(temp_buf, "%3d", caseTemp);
+  sprintf(temp_buf, "%3d", casetemp);
   display.print(temp_buf);
   display.print(scale);
   display.setCursor(42, 32);
-  sprintf(temp_buf, "%3d", heaterTemp);
+  sprintf(temp_buf, "%3d", heatertemp);
   display.print(temp_buf);
   display.print(scale);
   display.setTextSize(1);
@@ -474,11 +474,11 @@ void writeSerialData() {
   strcat(serial_output, serial_temp_buf);
   strcat(serial_output, ",");
   // then write the case temperature
-  sprintf(serial_temp_buf, "%3d", caseTemp);
+  sprintf(serial_temp_buf, "%3d", casetemp);
   strcat(serial_output, serial_temp_buf);
   strcat(serial_output, ",");
   //then write the heater temperature
-  sprintf(serial_temp_buf, "%3d", heaterTemp);
+  sprintf(serial_temp_buf, "%3d", heatertemp);
   strcat(serial_output, serial_temp_buf);
   strcat(serial_output, ",");
 
@@ -566,7 +566,7 @@ void loop() {
     checkForTempProblems();  // check if temperatures are in safe range
 
     // shut off fan if heater temp is low enough and if not in mode cooling or fan
-    if (heaterTemp <= caseovertemplimit && !(operatingMode == MODE_COOLING || operatingMode == MODE_FAN)) {
+    if (heatertemp <= caseovertemplimit && !(operatingMode == MODE_COOLING || operatingMode == MODE_FAN)) {
       fanOff();
     }
 
@@ -636,7 +636,7 @@ void loop() {
     // but also resetting it to the closed position after it sometimes
     // randomly moves when the relays turn on, as they seem to interfere with
     // it.
-    if (caseTemp <= lowerlimit && heaterTemp <= maxheatertemp) {
+    if (casetemp <= lowerlimit && heatertemp <= maxheatertemp) {
       if (heaterState == false) {
         closeServo = true;
       }
@@ -648,7 +648,7 @@ void loop() {
         servoClose();
         closeServo = false;
       }
-    } else if (caseTemp >= upperlimit || heaterTemp > maxheatertemp) {
+    } else if (casetemp >= upperlimit || heatertemp > maxheatertemp) {
       if (heaterState == true) {
         closeServo = true;
       }
