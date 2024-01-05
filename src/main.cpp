@@ -27,16 +27,17 @@ V1.4
 
 // Include configuartion file.
 // Remember to rename (see above)!
-#include "./configuration.h"
+#include <configuration.h>
 
 // Declaration of variables
 // Do not set values here, they are set in configuration.h
 
-int target;     // initial target temperature
-int maxtemp;    // target temperature limit
-int tolerance;  // set total tolerance for target temperature
-int undertemp;  // set temperature limit for detecting faulty/missing sensors
-char scale;     // set Celsius or Fahrenheit scale
+int target;         // initial target temperature
+int maxsettemp;     // target temperature limit
+int maxheatertemp;  // max heater temperature
+int tolerance;      // set total tolerance for target temperature
+int undertemp;      // set temperature limit for detecting faulty/missing sensors
+char scale;         // set Celsius or Fahrenheit scale
 
 int caseovertemplimit = 0;
 int heaterovertemplimit = 0;
@@ -307,7 +308,6 @@ void servoClose() {
 void checkForTempProblems() {
   if (caseTemp >= caseovertemplimit || heaterTemp >= heaterovertemplimit) {
     heaterOff();
-    fanOff();
     servoOpen();
     while (true) {
       // Flash the error message and get stuck here.
@@ -340,7 +340,6 @@ void checkForTempProblems() {
     }
   } else if (caseTemp <= undertemp || heaterTemp <= undertemp) {
     heaterOff();
-    fanOff();
     servoOpen();
     while (true) {
       // Flash the error message and get stuck here.
@@ -433,8 +432,8 @@ void measureTemperatures() {
 void updateTargetTemperature() {
   if (buttonUpPressed == true) {
     target = target + 5;
-    if (target > maxtemp) {  // Limit target temperature to maxtemp
-      target = maxtemp;
+    if (target > maxsettemp) {  // Limit target temperature to maxsettemp
+      target = maxsettemp;
     }
     updateTarget = true;
     buttonUpPressed = false;
@@ -510,7 +509,8 @@ void setup() {
     caseovertemplimit = CASE_TEMP_OVERTEMP_LIMIT_C;
     heaterovertemplimit = HEATER_TEMP_OVERTEMP_LIMIT_C;
     target = INITIAL_TARGET_C;
-    maxtemp = MAX_TEMP_SETTING_C;
+    maxsettemp = MAX_SET_TEMP_SETTING_C;
+    maxheatertemp = MAX_HEATER_TEMP_SETTING_C;
     undertemp = SENSOR_ERROR_UNDERTEMP_C;
     tolerance = TOLERANCE_C;
     scale = 'C';
@@ -518,7 +518,8 @@ void setup() {
     caseovertemplimit = CASE_TEMP_OVERTEMP_LIMIT_F;
     heaterovertemplimit = HEATER_TEMP_OVERTEMP_LIMIT_F;
     target = INITIAL_TARGET_F;
-    maxtemp = MAX_TEMP_SETTING_F;
+    maxsettemp = MAX_SET_TEMP_SETTING_F;
+    maxheatertemp = MAX_HEATER_TEMP_SETTING_F;
     undertemp = SENSOR_ERROR_UNDERTEMP_F;
     tolerance = TOLERANCE_F;
     scale = 'F';
@@ -564,6 +565,11 @@ void loop() {
     measureTemperatures();   // get new temperatures from sensors
     checkForTempProblems();  // check if temperatures are in safe range
 
+    // shut off fan if heater temp is low enough and if not in mode cooling or fan
+    if (heaterTemp <= caseovertemplimit && !(operatingMode == MODE_COOLING || operatingMode == MODE_FAN)) {
+      fanOff();
+    }
+
     // This displays the current millis() on the display. It does not serve any
     // function besides telling me that the system is still alive. I needed this
     // for debugging, because I ran into some weird RAM-overflow situations
@@ -607,7 +613,6 @@ void loop() {
     changeMode = false;
     drawIdleSymbol();
     servoClose();
-    fanOff();
     heaterOff();
   }
 
@@ -631,29 +636,24 @@ void loop() {
     // but also resetting it to the closed position after it sometimes
     // randomly moves when the relays turn on, as they seem to interfere with
     // it.
-
-    if (caseTemp <= lowerlimit) {
+    if (caseTemp <= lowerlimit && heaterTemp <= maxheatertemp) {
       if (heaterState == false) {
         closeServo = true;
       }
 
-      heaterOn();
       fanOn();
+      heaterOn();
 
       if (closeServo == true) {
         servoClose();
         closeServo = false;
       }
-    } else if (caseTemp >= upperlimit) {
+    } else if (caseTemp >= upperlimit || heaterTemp > maxheatertemp) {
       if (heaterState == true) {
         closeServo = true;
       }
 
       heaterOff();
-
-      if (heaterTemp <= caseovertemplimit) {
-        fanOff();
-      }
 
       if (closeServo == true) {
         servoClose();

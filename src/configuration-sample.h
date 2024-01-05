@@ -25,8 +25,8 @@ error! The address that's written here is just an example.
 // If you don't know how you can take a look at the examples of
 // the DallasTemperature library.
 #define ONE_WIRE_BUS 5                             // Pin used for temp sensors
-#define CASE_THERMOMETER_ADDRESS 0x28, 0x69, 0x05, 0x57, 0x04, 0xE1, 0x3C, 0xF5
-#define HEATER_THERMOMETER_ADDRESS 0x28, 0x27, 0x61, 0x7A, 0x00, 0x00, 0x00, 0x42
+#define CASE_THERMOMETER_ADDRESS 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x11     // REPLACEME
+#define HEATER_THERMOMETER_ADDRESS 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x11   // REPLACEME
 
 // Values for the position of the servo while open and closed.
 // Needs to be changed to your specific setup, as cheap no-name servos
@@ -78,18 +78,20 @@ error! The address that's written here is just an example.
 #define TEMPERATURE_SCALE_C true
 
 // Limits in Celsius
+#define INITIAL_TARGET_C 20
+#define MAX_SET_TEMP_SETTING_C 45
+#define MAX_HEATER_TEMP_SETTING_C 90
 #define CASE_TEMP_OVERTEMP_LIMIT_C 50
 #define HEATER_TEMP_OVERTEMP_LIMIT_C 100
-#define INITIAL_TARGET_C 20
-#define MAX_TEMP_SETTING_C 45
 #define TOLERANCE_C 3
 
-//Limits in Fahrenheit
+// Limits in Fahrenheit
+#define INITIAL_TARGET_F 70
+#define MAX_SET_TEMP_SETTING_F 115
+#define MAX_HEATER_TEMP_SETTING_F 195
 #define CASE_TEMP_OVERTEMP_LIMIT_F 120
 #define HEATER_TEMP_OVERTEMP_LIMIT_F 210
-#define INITIAL_TARGET_F 70
-#define MAX_TEMP_SETTING_F 115
-#define TOLERANCE_F 3
+#define TOLERANCE_F 6
 
 // Normally the temperature sensors  report -127°C (-196°F) when they are not wired
 // correctly or are defective, so we check for sensor-readings below -20°C (-4°F),
