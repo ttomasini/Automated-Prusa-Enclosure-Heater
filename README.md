@@ -4,7 +4,9 @@ This repo contains the software for the Automated Heating System for the Origina
 
 Link to the model on Printables: https://www.printables.com/model/561491
 
-It is designed to run on an Arduino Nano (the original one with an ATMEGA328p), so it tries to uses little RAM while still being able to drive the 128x64px OLED display, which already eats up half of it.
+This repository contains some bug fixes, new features and is specially optimized for the [Enclosure Heater PCB](https://github.com/ttomasini/automated-enclosure-heater-pcb). Nevertheless the code can (still) be also used with the original setup from Lars. Just make sure that you are using the correct `configuration.h`.
+
+It is designed to run on an Arduino Nano (the original one with an ATMega328p) as well as on Arduino Nano Every (ATMega4809), so it tries to uses little RAM while still being able to drive the 128x64px OLED display, which already eats up half of it.
 
 Enabling serial without reducing the buffer size may result in crashes, as there is not that much RAM free then.
 
