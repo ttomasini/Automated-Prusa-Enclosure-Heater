@@ -193,64 +193,51 @@ void display_prepare() {
   display.display();
 }
 
-// Turn heater on and update display
-void heaterOn() {
-  if (heaterState != true) {
-    digitalWrite(HEATER_PIN, HIGH);
+void setHeaterState(bool setOn) {
+  if (heaterState != setOn) {
     display.setTextSize(1);
     display.fillRect(48, 48, 30, 8, SH110X_BLACK);
     display.setCursor(48, 48);
-    display.print(F("ON"));
+
+    if(setOn) {
+      digitalWrite(HEATER_PIN, HIGH);
+      display.print(F("ON"));
+    } else {
+      digitalWrite(HEATER_PIN, LOW);
+      display.print(F("OFF"));
+    }
+
     display.display();
-    heaterState = true;
+    heaterState = setOn;
   }
 }
 
-// Turn heater off and update display
-void heaterOff() {
-  if (heaterState != false) {
-    digitalWrite(HEATER_PIN, LOW);
-    display.setTextSize(1);
-    display.fillRect(48, 48, 30, 8, SH110X_BLACK);
-    display.setCursor(48, 48);
-    display.print(F("OFF"));
-    display.display();
-    heaterState = false;
-  }
-}
-
-// Turn fan on and update display
-void fanOn() {
-  if (fanState != true) {
-    digitalWrite(FAN_PIN, HIGH);
+void setFanState(bool setOn) {
+  if (fanState != setOn) {
     display.setTextSize(1);
     display.fillRect(48, 56, 30, 8, SH110X_BLACK);
     display.setCursor(48, 56);
-    display.print(F("ON"));
-    display.display();
-    fanState = true;
-  }
-}
 
-// Turn fan off and update display
-void fanOff() {
-  if (fanState != false) {
-    digitalWrite(FAN_PIN, LOW);
-    display.setTextSize(1);
-    display.fillRect(48, 56, 30, 8, SH110X_BLACK);
-    display.setCursor(48, 56);
-    display.print(F("OFF"));
+    if(setOn) {
+      digitalWrite(FAN_PIN, HIGH);
+      display.print(F("ON"));
+    } else {
+      digitalWrite(FAN_PIN, LOW);
+      display.print(F("OFF"));
+    }
+    
     display.display();
-    fanState = false;
+    fanState = setOn;
   }
 }
 
 void servoTurn(int targetAngle) {
   int currentAngle = servo.read();
 
-  // mitigate possible invalid initial states to ensure smooth start
+  // mitigate possible invalid states
   if (currentAngle < 60 || currentAngle > 135) {
-    servo.write(100);
+    servo.write(SERVO_POS_CLOSED);
+    delay(SERVO_MOVING_MS);
     currentAngle = servo.read();
   }
 
@@ -261,40 +248,49 @@ void servoTurn(int targetAngle) {
       servo.write(--currentAngle);
     }
 
-    delay(17);
+    delay(18);
+  }
+}
+
+void servoAttach() {
+  servo.attach(SERVO_PIN);
+  delay(SERVO_MOVING_MS);
+}
+
+void servoDetach() {
+  delay(SERVO_MOVING_MS);  // Allow Servo time to reach position
+  servo.detach();          // Detach servo so that it wont try to move all the time
+}
+
+void setServoState(bool isOpen) {
+  if (servoState != isOpen) {
+    display.setCursor(90, 56);
+    display.setTextSize(1);
+    display.fillRect(90, 56, 48, 8, SH110X_BLACK);
+    if(isOpen) {
+      display.print(F("OPEN"));
+    } else {
+      display.print(F("CLOSED"));
+    }
+    display.display();
+    servoState = isOpen;
   }
 }
 
 // Set position of servo to open flap
 void servoOpen() {
-  servo.attach(SERVO_PIN);
+  servoAttach();
   servoTurn(SERVO_POS_OPEN);
-  if (servoState != true) {
-    display.setCursor(90, 56);
-    display.setTextSize(1);
-    display.fillRect(90, 56, 48, 8, SH110X_BLACK);
-    display.print(F("OPEN"));
-    display.display();
-    servoState = true;
-  }
-  delay(SERVO_MOVING_MS);  // Allow Servo time to reach position
-  servo.detach();          // Detach servo so that it wont try to move all the time
+  setServoState(true);
+  servoDetach();
 }
 
 // Set position of servo to close flap
 void servoClose() {
-  servo.attach(SERVO_PIN);
+  servoAttach();
   servoTurn(SERVO_POS_CLOSED);
-  if (servoState != false) {
-    display.setCursor(90, 56);
-    display.setTextSize(1);
-    display.fillRect(90, 56, 48, 8, SH110X_BLACK);
-    display.print(F("CLOSED"));
-    display.display();
-    servoState = false;
-  }
-  delay(SERVO_MOVING_MS);  // Allow Servo time to reach position
-  servo.detach();          // Detach servo so that it wont try to move all the time
+  setServoState(false);
+  servoDetach();
 }
 
 // Checks if there are any temperature related problems and turns off the
@@ -307,7 +303,7 @@ void servoClose() {
 // accordingly.
 void checkForTempProblems() {
   if (casetemp >= caseovertemplimit || heatertemp >= heaterovertemplimit) {
-    heaterOff();
+    setHeaterState(false);
     servoOpen();
     while (true) {
       // Flash the error message and get stuck here.
@@ -339,7 +335,7 @@ void checkForTempProblems() {
       delay(1000);
     }
   } else if (casetemp <= undertemp || heatertemp <= undertemp) {
-    heaterOff();
+    setHeaterState(false);
     servoOpen();
     while (true) {
       // Flash the error message and get stuck here.
@@ -537,8 +533,8 @@ void setup() {
   pinMode(BUTTON_UP, INPUT_PULLUP);
   pinMode(BUTTON_DOWN, INPUT_PULLUP);
 
-  // Initialize servo and move around
-  servo.attach(SERVO_PIN);
+  // Initialize servo with zero position and briefly open to greet user
+  servo.write(SERVO_POS_CLOSED);
   servoOpen();
 
   // Initialize serial for logging purposes.
@@ -569,13 +565,13 @@ void loop() {
     if(!heaterState) {
       // Shut off fan if heater temp is low enough and if not in mode cooling or fan
       if (heatertemp < caseovertemplimit && !(operatingMode == MODE_COOLING || operatingMode == MODE_FAN)) {
-        fanOff();
+        setFanState(false);
       }
     }
 
     // Ensure fan is on when heating is active
     if(heatertemp > caseovertemplimit) {
-      fanOn();
+      setFanState(true);
     }
 
     // This displays the current millis() on the display. It does not serve any
@@ -621,7 +617,7 @@ void loop() {
     changeMode = false;
     drawIdleSymbol();
     servoClose();
-    heaterOff();
+    setHeaterState(false);
   }
 
   // /*******************************************************
@@ -649,8 +645,8 @@ void loop() {
         closeServo = true;
       }
 
-      fanOn();
-      heaterOn();
+      setFanState(true);
+      setHeaterState(true);
 
       if (closeServo == true) {
         servoClose();
@@ -661,7 +657,7 @@ void loop() {
         closeServo = true;
       }
 
-      heaterOff();
+      setHeaterState(false);
 
       if (closeServo == true) {
         servoClose();
@@ -677,8 +673,8 @@ void loop() {
     changeMode = false;
     drawCoolingSymbol();
     servoOpen();
-    fanOn();
-    heaterOff();
+    setFanState(true);
+    setHeaterState(false);
   }
 
   // /*******************************************************
@@ -688,7 +684,7 @@ void loop() {
     changeMode = false;
     drawFanSymbol();
     servoClose();
-    fanOn();
-    heaterOff();
+    setFanState(true);
+    setHeaterState(false);
   }
 }

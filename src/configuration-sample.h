@@ -32,7 +32,7 @@ error! The address that's written here is just an example.
 // Needs to be changed to your specific setup, as cheap no-name servos
 // tend to vary a lot regarding its position to a given signal.
 #define SERVO_POS_OPEN 70
-#define SERVO_POS_CLOSED 125
+#define SERVO_POS_CLOSED 120
 
 // Different servos take different amounts of time to move to their destination.
 // Because I don't want the Servo jitter all the time, I'm "attaching" and
