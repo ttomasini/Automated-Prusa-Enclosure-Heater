@@ -234,13 +234,6 @@ void setFanState(bool setOn) {
 void servoTurn(int targetAngle) {
   int currentAngle = servo.read();
 
-  // mitigate possible invalid states
-  if (currentAngle < 60 || currentAngle > 135) {
-    servo.write(SERVO_POS_CLOSED);
-    delay(SERVO_MOVING_MS);
-    currentAngle = servo.read();
-  }
-
   while (currentAngle != targetAngle) {
     if (currentAngle < targetAngle) {
       servo.write(++currentAngle);
@@ -267,11 +260,13 @@ void setServoState(bool isOpen) {
     display.setCursor(90, 56);
     display.setTextSize(1);
     display.fillRect(90, 56, 48, 8, SH110X_BLACK);
+
     if(isOpen) {
       display.print(F("OPEN"));
     } else {
       display.print(F("CLOSED"));
     }
+
     display.display();
     servoState = isOpen;
   }
