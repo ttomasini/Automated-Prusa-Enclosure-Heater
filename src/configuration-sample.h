@@ -47,8 +47,8 @@ error! The address that's written here is just an example.
 #define BUTTON_DOWN 2
 
 // Definitions of pins where relays are for heater and fan are connected
-#define HEATER_PIN 7
-#define FAN_PIN 6
+#define HEATER_PIN 6
+#define FAN_PIN 7
 #define SERVO_PIN 9
 
 // Definition of whether to use serial output logging or not, and how many
