@@ -2,9 +2,7 @@
 ##########################################################
 AUTOMATED HEATING SYSTEM FOR ORIGINAL PRUSA ENCLOSURE
 Originally written by user @lars and published on
-printables.com in august 2023.
-Updated in november 2023.
-V1.4
+printables.com in August 2023.
 ##########################################################
 
 *******************************************************
@@ -289,13 +287,16 @@ void servoClose() {
 }
 
 // Checks if there are any temperature related problems and turns off the
-// heating system accordingly. There are two different cases here: Overtemp and
-// sensor-error. Overtemp should be pretty self-explanatory, sensor error means
-// that the sensor reports values, that are obviously false. Normally they
-// report -127°C (-196°F) when they are not wired correctly or are defective, so we check
-// for sensor-readings below -20°C (-4°F), as I dont expect anyone actually trying to
-// use this system below that temperature. If you do, adjust the threshold
-// accordingly.
+// heating system accordingly.
+//
+// There are two different cases here: Overtemp and sensor-error.
+//   * Overtemp should be pretty self-explanatory.
+//   * Sensor error means that the sensor reports values, that are obviously
+//     false. Normally they report -127°C (-196°F) when they are not wired
+//     correctly or are defective, so we check for sensor-readings below
+//     -20°C (-4°F), as I dont expect anyone actually trying to use this
+//     system below that temperature. If you do, adjust the threshold
+//     accordingly.
 void checkForTempProblems() {
   if (casetemp >= caseovertemplimit || heatertemp >= heaterovertemplimit) {
     setHeaterState(false);
@@ -316,6 +317,7 @@ void checkForTempProblems() {
       display.println(F("Please powercycle!"));
       display.display();
       delay(1000);
+
       display.clearDisplay();
       display.setCursor(0, 0);
       display.fillRect(0, 0, 128, 64, SH110X_WHITE);
@@ -349,9 +351,9 @@ void checkForTempProblems() {
       display.println(F("Please powercycle!"));
       display.display();
       delay(1000);
+
       display.clearDisplay();
       display.fillRect(0, 0, 128, 64, SH110X_WHITE);
-
       display.setTextColor(SH110X_BLACK);
       display.setTextSize(3);
       display.println(F("ERROR!"));
@@ -369,26 +371,26 @@ void checkForTempProblems() {
 // Checks if buttons were pressed and set flags accordingly
 void checkButtons() {
   buttonUpState = !digitalRead(BUTTON_UP);
-  if (buttonUpState == true && prevButtonUpState == false) {
+  if (buttonUpState && !prevButtonUpState) {
     buttonUpPressed = true;
     prevButtonUpState = true;
-  } else if (buttonUpState == false && prevButtonUpState == true) {
+  } else if (!buttonUpState && prevButtonUpState) {
     prevButtonUpState = false;
   }
 
   buttonDownState = !digitalRead(BUTTON_DOWN);
-  if (buttonDownState == true && prevButtonDownState == false) {
+  if (buttonDownState && !prevButtonDownState) {
     buttonDownPressed = true;
     prevButtonDownState = true;
-  } else if (buttonDownState == false && prevButtonDownState == true) {
+  } else if (!buttonDownState && prevButtonDownState) {
     prevButtonDownState = false;
   }
 
   buttonSelectState = !digitalRead(BUTTON_SELECT);
-  if (buttonSelectState == true && prevButtonSelectState == false) {
+  if (buttonSelectState && !prevButtonSelectState) {
     buttonSelectPressed = true;
     prevButtonSelectState = true;
-  } else if (buttonSelectState == false && prevButtonSelectState == true) {
+  } else if (!buttonSelectState && prevButtonSelectState) {
     prevButtonSelectState = false;
   }
 }
@@ -396,13 +398,15 @@ void checkButtons() {
 // Gets temperature readings from the sensors and draws them on the display.
 void measureTemperatures() {
   sensors.requestTemperatures();
-  if (TEMPERATURE_SCALE_C == true) {
+
+  if (TEMPERATURE_SCALE_C) {
     casetemp = sensors.getTempC(caseThermometer);
     heatertemp = sensors.getTempC(heaterThermometer);
   } else {
     casetemp = sensors.getTempF(caseThermometer);
     heatertemp = sensors.getTempF(heaterThermometer);
   }
+
   // Show current temp on display
   display.fillRect(42, 16, 46, 32, SH110X_BLACK);
   display.setCursor(42, 16);
@@ -421,7 +425,7 @@ void measureTemperatures() {
 // Adjustment of target temperature
 // If up/down button was pressed, change target temp accordingly
 void updateTargetTemperature() {
-  if (buttonUpPressed == true) {
+  if (buttonUpPressed) {
     target = target + 5;
     if (target > maxsettemp) {  // Limit target temperature to maxsettemp
       target = maxsettemp;
@@ -429,7 +433,7 @@ void updateTargetTemperature() {
     updateTarget = true;
     buttonUpPressed = false;
   }
-  if (buttonDownPressed == true) {
+  if (buttonDownPressed) {
     target = target - 5;
     if (target < 0) {  // Limit target to positive temperatures
       target = 0;
@@ -439,7 +443,7 @@ void updateTargetTemperature() {
   }
 
   // Only write changes to display when something actually changed.
-  if (updateTarget == true) {
+  if (updateTarget) {
     // As target changed, set new limits
     upperlimit = target + tolerance / 2;
     lowerlimit = target - tolerance / 2;
@@ -487,6 +491,7 @@ void writeSerialData() {
   strcat(serial_output, serial_mode_buf);
   Serial.println(serial_output);
 }
+
 void setup() {
   // Initialize temperature sensors and set resolution to 9 bit
   sensors.begin();
@@ -495,8 +500,7 @@ void setup() {
   sensors.setWaitForConversion(false);
 
   // Initialize Celsius or Fahrenheit values
-
-  if (TEMPERATURE_SCALE_C == true) {
+  if (TEMPERATURE_SCALE_C) {
     caseovertemplimit = CASE_TEMP_OVERTEMP_LIMIT_C;
     heaterovertemplimit = HEATER_TEMP_OVERTEMP_LIMIT_C;
     target = INITIAL_TARGET_C;
@@ -533,11 +537,11 @@ void setup() {
   servoOpen();
 
   // Initialize serial for logging purposes.
-  if (SERIAL_LOGGING == true) {
+  // Since attaching a serial monitor resets the Arduino,
+  // we can use setup() to insert the column headers and the
+  // monitor program will capture it.
+  if (SERIAL_LOGGING) {
     Serial.begin(115200);
-    // Since attaching a serial monitor resets the Arduino,
-    // we can use setup() to insert the column headers and the
-    // monitor program will capture it.
     Serial.println(F("Target Temp,Case Temp,Heater Temp,Mode"));
   }
 }
@@ -546,10 +550,10 @@ void loop() {
   // Check if any of the buttons were pressed
   checkButtons();
 
-  // Read current temperatures from sensors, if set time has passed since last
-  // check As this operation takes quite some time, we'll only do it every few
-  // seconds. The temperature in the enclosure doesnt't change that fast
-  // anyways.
+  // Read current temperatures from sensors, if set time has passed since
+  // last check As this operation takes quite some time, we'll only do it
+  // every few seconds. The temperature in the enclosure doesnt't change
+  // that fast anyways.
   if (millis() - previousMillis_temp >= TEMPERATURE_DELAY) {
     previousMillis_temp = millis();
 
@@ -584,14 +588,11 @@ void loop() {
     display.display();
   }
 
-  if (millis() - previousMillis_serial >= SERIAL_RATE_MS && SERIAL_LOGGING == true) {
-
-    // Write a new line of serial data if the timer has elapsed.
-    // This allows a different logging rate from the data reporting
-    // rate so that logging is not tied to the system's "response rate."
-
+  // Write a new line of serial data if the timer has elapsed.
+  // This allows a different logging rate from the data reporting
+  // rate so that logging is not tied to the system's "response rate."
+  if (SERIAL_LOGGING && millis() - previousMillis_serial >= SERIAL_RATE_MS) {
     previousMillis_serial = millis();
-
     writeSerialData();
   }
 
@@ -608,7 +609,7 @@ void loop() {
   /*******************************************************
   ################ IDLE MODE - DO NOTHING ################
   *******************************************************/
-  if (operatingMode == MODE_IDLE && changeMode == true) {
+  if (operatingMode == MODE_IDLE && changeMode) {
     changeMode = false;
     drawIdleSymbol();
     servoClose();
@@ -619,7 +620,7 @@ void loop() {
   // ##### HEATING MODE - HEATER ON, FAN ON, VENT CLOSED ####
   // *******************************************************/
   if (operatingMode == MODE_HEATING) {
-    if (changeMode == true) {
+    if (changeMode) {
       changeMode = false;
       drawHeatingSymbol();
       servoClose();
@@ -636,25 +637,25 @@ void loop() {
     // randomly moves when the relays turn on, as they seem to interfere with
     // it.
     if (casetemp <= lowerlimit && heatertemp < (maxheatertemp-tolerance)) {
-      if (heaterState == false) {
+      if (!heaterState) {
         closeServo = true;
       }
 
       setFanState(true);
       setHeaterState(true);
 
-      if (closeServo == true) {
+      if (closeServo) {
         servoClose();
         closeServo = false;
       }
     } else if (casetemp >= upperlimit || heatertemp > maxheatertemp) {
-      if (heaterState == true) {
+      if (heaterState) {
         closeServo = true;
       }
 
       setHeaterState(false);
 
-      if (closeServo == true) {
+      if (closeServo) {
         servoClose();
         closeServo = false;
       }
@@ -664,7 +665,7 @@ void loop() {
   // /*******************************************************
   // ##### COOLING MODE - HEATER OFF, FAN ON, VENT OPEN #####
   // *******************************************************/
-  if (operatingMode == MODE_COOLING && changeMode == true) {
+  if (operatingMode == MODE_COOLING && changeMode) {
     changeMode = false;
     drawCoolingSymbol();
     servoOpen();
@@ -675,7 +676,7 @@ void loop() {
   // /*******************************************************
   // ###### FAN MODE - HEATER OFF, FAN ON, VENT CLOSED ######
   // *******************************************************/
-  if (operatingMode == MODE_FAN && changeMode == true) {
+  if (operatingMode == MODE_FAN && changeMode) {
     changeMode = false;
     drawFanSymbol();
     servoClose();
